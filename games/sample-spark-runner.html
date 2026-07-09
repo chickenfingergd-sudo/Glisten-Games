@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sample Spark Runner</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+        overflow: hidden;
+        color: #f8fbff;
+        background: linear-gradient(135deg, #061019, #172450 55%, #3d174f);
+        font-family: system-ui, sans-serif;
+      }
+
+      canvas {
+        width: min(920px, 94vw);
+        height: min(520px, 72vh);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 8px;
+        background: rgba(2, 8, 16, 0.72);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 0 50px rgba(124, 247, 255, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game" width="920" height="520" aria-label="Sample arcade game"></canvas>
+    <script>
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+      const player = { x: 94, y: 390, vy: 0, grounded: true };
+      const sparks = Array.from({ length: 44 }, (_, index) => ({ x: index * 38, y: Math.random() * 250 + 40, s: Math.random() * 2 + 1 }));
+      let obstacles = [{ x: 760, w: 34, h: 58 }];
+      let score = 0;
+
+      function jump() {
+        if (!player.grounded) return;
+        player.vy = -15;
+        player.grounded = false;
+      }
+
+      addEventListener("keydown", (event) => {
+        if (event.code === "Space" || event.code === "ArrowUp") jump();
+      });
+      addEventListener("pointerdown", jump);
+
+      function tick() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grd.addColorStop(0, "#0b1426");
+        grd.addColorStop(1, "#251341");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        sparks.forEach((spark) => {
+          spark.x -= 1.7;
+          if (spark.x < -10) spark.x = canvas.width + 10;
+          ctx.globalAlpha = 0.5 + Math.sin(performance.now() / 300 + spark.x) * 0.25;
+          ctx.fillStyle = "#7cf7ff";
+          ctx.beginPath();
+          ctx.arc(spark.x, spark.y, spark.s, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = "rgba(255,255,255,.16)";
+        ctx.fillRect(0, 430, canvas.width, 3);
+
+        player.vy += 0.72;
+        player.y += player.vy;
+        if (player.y > 390) {
+          player.y = 390;
+          player.vy = 0;
+          player.grounded = true;
+        }
+
+        obstacles.forEach((obstacle) => {
+          obstacle.x -= 5.2;
+          if (obstacle.x < -70) {
+            obstacle.x = canvas.width + Math.random() * 280;
+            score += 1;
+          }
+          ctx.fillStyle = "#ff77aa";
+          ctx.fillRect(obstacle.x, 430 - obstacle.h, obstacle.w, obstacle.h);
+        });
+
+        ctx.fillStyle = "#7cf7ff";
+        ctx.fillRect(player.x, player.y, 42, 42);
+        ctx.fillStyle = "#f8fbff";
+        ctx.font = "700 26px system-ui";
+        ctx.fillText(`Score ${score}`, 30, 46);
+        ctx.font = "500 16px system-ui";
+        ctx.fillText("Space / tap to jump", 30, 72);
+        requestAnimationFrame(tick);
+      }
+      tick();
+    </script>
+  </body>
+</html>

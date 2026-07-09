@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glisten Games</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="sparkCanvas" aria-hidden="true"></canvas>
+    <div class="ambient-grid" aria-hidden="true"></div>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Game navigation">
+        <a class="brand" href="#library" aria-label="Glisten Games home">
+          <span class="brand-mark">G</span>
+          <span>
+            <strong>Glisten</strong>
+            <small>Games</small>
+          </span>
+        </a>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="library" title="Library">
+            <span>⌂</span>
+            <strong>Library</strong>
+          </button>
+          <button class="nav-item" data-view="favorites" title="Favorites">
+            <span>★</span>
+            <strong>Favorites</strong>
+          </button>
+          <button class="nav-item" data-view="recent" title="Recent">
+            <span>↺</span>
+            <strong>Recent</strong>
+          </button>
+          <button class="nav-item" data-view="proxy" title="Proxy">
+            <span>⌁</span>
+            <strong>Proxy</strong>
+          </button>
+          <button class="nav-item" data-view="settings" title="Settings">
+            <span>⚙</span>
+            <strong>Settings</strong>
+          </button>
+        </nav>
+
+        <div class="quick-status">
+          <span class="status-dot"></span>
+          <span id="scanStatus">Scanning games folder</span>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div>
+            <h1 id="viewTitle">Library</h1>
+          </div>
+          <div class="top-actions">
+            <label class="search-wrap" for="searchInput">
+              <span>⌕</span>
+              <input id="searchInput" type="search" placeholder="Search games" autocomplete="off" />
+            </label>
+            <button id="refreshBtn" class="icon-btn" title="Rescan games folder">↻</button>
+            <button id="panicBtn" class="panic-btn" title="Quick hide">Blank</button>
+          </div>
+        </header>
+
+        <div class="view-stage">
+          <section id="libraryView" class="view active" aria-label="Game library">
+            <div class="hero-band">
+              <div class="hero-copy">
+                <h2>Play in a polished glassy arcade.</h2>
+                <p>Favorites, recents, visual themes, motion, density, player behavior, and stealth controls all save on this device.</p>
+              </div>
+              <div class="hero-stats" aria-label="Library stats">
+                <div>
+                  <strong id="gameCount">0</strong>
+                  <span>games found</span>
+                </div>
+                <div>
+                  <strong id="favoriteCount">0</strong>
+                  <span>favorites</span>
+                </div>
+                <div>
+                  <strong id="recentCount">0</strong>
+                  <span>recent plays</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-bar" aria-label="Library controls">
+              <div class="segmented" role="group" aria-label="Sort games">
+                <button class="segment active" data-sort="name">Name</button>
+                <button class="segment" data-sort="updated">Updated</button>
+                <button class="segment" data-sort="size">Size</button>
+              </div>
+              <select id="launchMode" aria-label="Launch mode">
+                <option value="player">Open in player</option>
+                <option value="new-tab">Open in new tab</option>
+              </select>
+            </div>
+
+            <div id="gameGrid" class="game-grid" aria-live="polite"></div>
+            <div id="emptyState" class="empty-state" hidden>
+              <strong>No games found yet.</strong>
+              <span>Put `.html` game files in the `games` folder, then hit refresh.</span>
+            </div>
+          </section>
+
+          <section id="favoritesView" class="view" aria-label="Favorites">
+            <div id="favoritesGrid" class="game-grid"></div>
+            <div id="favoritesEmpty" class="empty-state" hidden>
+              <strong>No favorites yet.</strong>
+              <span>Tap the star on games you want pinned here.</span>
+            </div>
+          </section>
+
+          <section id="recentView" class="view" aria-label="Recently played">
+            <div id="recentGrid" class="game-grid"></div>
+            <div id="recentEmpty" class="empty-state" hidden>
+              <strong>No recent plays yet.</strong>
+              <span>Open a game and it will appear here.</span>
+            </div>
+          </section>
+
+          <section id="proxyView" class="view" aria-label="Proxy">
+            <div class="proxy-layout">
+              <section class="proxy-console">
+                <div class="proxy-hero">
+                  <div>
+                    <p class="eyebrow">Clean web portal</p>
+                    <h2>Fast glass proxy.</h2>
+                  </div>
+                  <span class="proxy-chip" id="oldProxyStatus">Ready</span>
+                </div>
+
+                <form id="oldProxyForm" class="proxy-bar">
+                  <label class="proxy-input-wrap" for="oldProxyInput">
+                    <span>⌕</span>
+                    <input id="oldProxyInput" type="text" placeholder="Search or enter a URL" autocomplete="off" />
+                  </label>
+                  <button class="proxy-go" type="submit">Go</button>
+                  <button class="icon-btn" id="proxyEngine" type="button" title="Try the live JavaScript engine">⚡</button>
+                  <button class="icon-btn" id="proxyOpen" type="button" title="Open current page directly in a new tab">↗</button>
+                  <button class="icon-btn" id="proxyHome" type="button" title="Clear proxy page">⌂</button>
+                </form>
+
+                <div class="proxy-shortcuts" aria-label="Proxy shortcuts">
+                  <button class="proxy-tile" data-proxy-url="https://lite.duckduckgo.com/lite/">
+                    <strong>DuckDuckGo</strong>
+                    <span>Private search</span>
+                  </button>
+                  <button class="proxy-tile" data-proxy-url="https://www.wikipedia.org">
+                    <strong>Wikipedia</strong>
+                    <span>Reference</span>
+                  </button>
+                  <button class="proxy-tile" data-proxy-url="https://www.coolmathgames.com">
+                    <strong>Coolmath</strong>
+                    <span>Games</span>
+                  </button>
+                </div>
+              </section>
+
+              <section class="proxy-frame-shell">
+                <div class="proxy-browser-top">
+                  <div class="proxy-tab-row">
+                    <div class="proxy-browser-mark" title="Glisten proxy">G</div>
+                    <div class="proxy-tabs" id="proxyTabs" aria-label="Proxy browser tabs"></div>
+                    <button class="proxy-new-tab" id="proxyNewTab" type="button" title="New proxy tab">+</button>
+                  </div>
+
+                  <div class="proxy-toolbar">
+                    <button class="proxy-tool" id="proxyBack" type="button" title="Back">&lsaquo;</button>
+                    <button class="proxy-tool" id="proxyForward" type="button" title="Forward">&rsaquo;</button>
+                    <button class="proxy-tool" id="proxyReload" type="button" title="Reload">&#8635;</button>
+                    <button class="proxy-tool" id="proxyHomeTop" type="button" title="New tab home">&#8962;</button>
+
+                    <form id="proxyForm" class="proxy-address-bar">
+                      <span class="proxy-search-icon">&#8981;</span>
+                      <input id="proxyInput" type="text" placeholder="Search or enter a URL" autocomplete="off" />
+                      <button class="proxy-bookmark-star" id="proxyBookmark" type="button" title="Bookmark this page">&#9734;</button>
+                      <button class="proxy-go" type="submit">Go</button>
+                    </form>
+
+                    <button class="proxy-tool live-engine" id="proxyEngineTop" type="button" title="Try live JavaScript engine">&#9889;</button>
+                    <button class="proxy-tool" id="proxyOpenTop" type="button" title="Open current page directly in a new tab">&#8599;</button>
+                    <span class="proxy-chip" id="proxyStatus">Ready</span>
+                  </div>
+
+                  <div class="proxy-bookmarks-bar" id="proxyBookmarks" aria-label="Saved proxy bookmarks"></div>
+                </div>
+                <div class="proxy-frame-stack" id="proxyFrameStack">
+                  <div class="proxy-frame-empty" id="proxyEmpty">
+                    <strong>New proxy tab.</strong>
+                    <span>Search, open a bookmark, or enter a site above.</span>
+                  </div>
+                  <iframe id="proxyFrame" class="proxy-frame active" title="Proxy viewer" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-read; clipboard-write" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-downloads allow-modals allow-presentation allow-top-navigation-by-user-activation"></iframe>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section id="settingsView" class="view" aria-label="Settings">
+            <div class="settings-layout">
+              <section class="settings-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Style</p>
+                  <h2>Make it yours</h2>
+                </div>
+                <div class="preset-grid" id="presetGrid"></div>
+                <div class="setting-row">
+                  <label for="accentColor">Accent color</label>
+                  <input id="accentColor" type="color" />
+                </div>
+                <div class="setting-row">
+                  <label for="backgroundSelect">Background</label>
+                  <select id="backgroundSelect">
+                    <option value="prism">Prism glass</option>
+                    <option value="midnight">Midnight chrome</option>
+                    <option value="sunrise">Solar sheen</option>
+                    <option value="matrix">Matrix mist</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <label for="fontSelect">Font mood</label>
+                  <select id="fontSelect">
+                    <option value="system">Clean system</option>
+                    <option value="rounded">Rounded</option>
+                    <option value="mono">Arcade mono</option>
+                  </select>
+                </div>
+              </section>
+
+              <section class="settings-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Feel</p>
+                  <h2>Motion and glow</h2>
+                </div>
+                <div class="setting-row">
+                  <label for="glassRange">Glass blur</label>
+                  <input id="glassRange" type="range" min="0" max="30" value="18" />
+                </div>
+                <div class="setting-row">
+                  <label for="glowRange">Glow strength</label>
+                  <input id="glowRange" type="range" min="0" max="100" value="72" />
+                </div>
+                <div class="setting-row">
+                  <label for="sparkleRange">Sparkles</label>
+                  <input id="sparkleRange" type="range" min="0" max="140" value="75" />
+                </div>
+                <div class="setting-row">
+                  <label for="radiusRange">Corner radius</label>
+                  <input id="radiusRange" type="range" min="0" max="24" value="8" />
+                </div>
+                <label class="toggle-row">
+                  <span>Animated background</span>
+                  <input id="motionToggle" type="checkbox" checked />
+                </label>
+                <label class="toggle-row">
+                  <span>Reduce animations</span>
+                  <input id="reducedToggle" type="checkbox" />
+                </label>
+              </section>
+
+              <section class="settings-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Layout</p>
+                  <h2>Library controls</h2>
+                </div>
+                <div class="setting-row">
+                  <label for="densitySelect">Card density</label>
+                  <select id="densitySelect">
+                    <option value="roomy">Roomy</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="compact">Compact</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <label for="cardStyleSelect">Card style</label>
+                  <select id="cardStyleSelect">
+                    <option value="poster">Poster</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="neon">Neon edge</option>
+                  </select>
+                </div>
+                <label class="toggle-row">
+                  <span>Show file details</span>
+                  <input id="detailsToggle" type="checkbox" checked />
+                </label>
+                <label class="toggle-row">
+                  <span>Auto focus player</span>
+                  <input id="autoFocusToggle" type="checkbox" checked />
+                </label>
+                <button id="resetSettings" class="wide-btn">Reset appearance</button>
+              </section>
+
+              <section class="settings-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Stealth</p>
+                  <h2>Quick hide</h2>
+                </div>
+                <div class="setting-row">
+                  <label for="panicTitle">Blank page title</label>
+                  <input id="panicTitle" type="text" maxlength="40" />
+                </div>
+                <div class="setting-row">
+                  <label for="panicUrl">Blank button URL</label>
+                  <input id="panicUrl" type="url" placeholder="https://example.com" />
+                </div>
+                <label class="toggle-row">
+                  <span>Open games fullscreen</span>
+                  <input id="fullscreenToggle" type="checkbox" />
+                </label>
+                <button id="clearData" class="wide-btn danger">Clear saved favorites and recents</button>
+              </section>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="playerDialog" class="player-dialog">
+      <div class="player-shell" id="playerShell">
+        <header class="player-toolbar">
+          <div>
+            <p class="eyebrow">Now playing</p>
+            <strong id="playerTitle">Game</strong>
+          </div>
+          <div class="player-actions">
+            <button id="favoritePlaying" class="icon-btn" title="Favorite">★</button>
+            <button id="openExternal" class="icon-btn" title="Open in new tab">↗</button>
+            <button id="fullscreenBtn" class="icon-btn" title="Fullscreen">⛶</button>
+            <button id="closePlayer" class="icon-btn" title="Close">×</button>
+          </div>
+        </header>
+        <iframe id="gameFrame" title="Game player" allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write" allowfullscreen></iframe>
+      </div>
+    </dialog>
+
+    <script src="app.js?v=proxy-browser-2" defer></script>
+  </body>
+</html>

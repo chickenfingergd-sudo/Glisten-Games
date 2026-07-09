@@ -1,0 +1,11 @@
+node_modules/
+.npm-cache/
+.agents/
+.codex/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.DS_Store
+Thumbs.db

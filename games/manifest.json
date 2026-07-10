@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-10T07:15:03.422Z",
+  "generatedAt": "2026-07-10T21:51:50.697Z",
   "games": [
     {
       "id": "baldi-plus-baldi-plus-html",
@@ -16,6 +16,14 @@
       "url": "games/bergentruck/BERGENTRUCK_201X.html",
       "size": 6157,
       "updated": "2026-07-09T05:16:27.765Z"
+    },
+    {
+      "id": "fish-main-fish-html",
+      "title": "FISH",
+      "file": "fish-main/FISH.html",
+      "url": "games/fish-main/FISH.html",
+      "size": 5401,
+      "updated": "2026-07-10T21:32:31.011Z"
     },
     {
       "id": "getting-over-it-getting-over-it-html",

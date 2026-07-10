@@ -75,6 +75,7 @@ const state = {
   proxyReady: null,
   proxyTransportReady: false,
   proxySmokeOk: false,
+  proxyEngineOnline: false,
   proxyTabs: [],
   activeProxyTabId: "",
   proxyTabSeq: 0,
@@ -705,6 +706,7 @@ async function ensureProxyEngine() {
     await proxyEngineSmokeTest();
     state.proxySmokeOk = true;
   }
+  state.proxyEngineOnline = true;
   sessionStorage.removeItem(proxyReloadKey);
 }
 
@@ -995,6 +997,7 @@ async function loadProxy(value, mode = "auto") {
     state.proxyReady = null;
     state.proxyTransportReady = false;
     state.proxySmokeOk = false;
+    state.proxyEngineOnline = false;
     frame.dataset.proxyOk = "false";
     setProxyTabStatus(tab, "Needs engine");
     frame.srcdoc = proxyNotice("Proxy engine could not start.", error.message);
@@ -1102,6 +1105,17 @@ function setupProxyFrame(frame) {
         if (proxyFrameLooksBroken(health)) {
           if (frame.dataset.proxyMode === "engine") {
             if (useProxyFallback(frame)) return;
+
+            if (state.proxyEngineOnline) {
+              const tab = state.proxyTabs.find((item) => item.frame === frame);
+              frame.dataset.proxyOk = "false";
+              frame.srcdoc = proxyNotice(
+                "This site did not load through the proxy.",
+                "The live engine is connected, but the remote site did not return usable content."
+              );
+              if (tab) setProxyTabStatus(tab, "Site unavailable");
+              return;
+            }
           }
 
           if (useProxyFallback(frame)) return;

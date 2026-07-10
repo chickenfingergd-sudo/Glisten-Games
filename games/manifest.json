@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-10T06:11:43.833Z",
+  "generatedAt": "2026-07-10T07:15:03.422Z",
   "games": [
     {
       "id": "baldi-plus-baldi-plus-html",
@@ -24,6 +24,14 @@
       "url": "games/getting%20over%20it/getting%20over%20it.html",
       "size": 6379,
       "updated": "2026-07-09T05:37:02.590Z"
+    },
+    {
+      "id": "genizy-web-port-main-minesweeperplus-minesweeperplus-html",
+      "title": "MinesweeperPlus",
+      "file": "genizy web-port main minesweeperplus/MinesweeperPlus.html",
+      "url": "games/genizy%20web-port%20main%20minesweeperplus/MinesweeperPlus.html",
+      "size": 7618,
+      "updated": "2026-07-10T07:04:07.812Z"
     },
     {
       "id": "sample-spark-runner-html",

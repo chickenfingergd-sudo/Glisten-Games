@@ -4,7 +4,7 @@
   "services": {
     "frontend": {
       "root": "frontend",
-      "buildCommand": "node scripts/generate-games-manifest.js",
+      "buildCommand": "node scripts/prepare-games.js",
       "outputDirectory": "."
     },
     "proxy": {

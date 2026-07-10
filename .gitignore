@@ -2,6 +2,7 @@ node_modules/
 .npm-cache/
 .agents/
 .codex/
+frontend/games/**
 
 npm-debug.log*
 yarn-debug.log*

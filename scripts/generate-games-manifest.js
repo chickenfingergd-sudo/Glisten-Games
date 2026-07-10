@@ -4,6 +4,7 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const gamesDir = path.join(root, "games");
 const manifestPath = path.join(gamesDir, "manifest.json");
+const ignoredDirectoryNames = new Set([".html-game-fixer-backups", "node_modules", ".git"]);
 
 function titleFromFile(filePath) {
   return path
@@ -27,6 +28,7 @@ function scanGames() {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const absolute = path.join(dir, entry.name);
       if (entry.isDirectory()) {
+        if (ignoredDirectoryNames.has(entry.name)) continue;
         walk(absolute);
         continue;
       }

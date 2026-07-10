@@ -42,4 +42,10 @@ This writes `games/manifest.json`, which lets the GitHub Pages version show the 
 5. Set **Source** to **GitHub Actions**.
 6. Push to `main`; the included workflow will deploy the static site.
 
-For the full proxy features, deploy the Node server to a Node host such as Render, Railway, Fly.io, or a VPS instead of GitHub Pages.
+## Vercel Services
+
+The Vercel deployment uses two services in one project: the website at `/`, and the live proxy backend for `/uv/`, `/baremux/`, `/epoxy/`, `/service/`, `/wisp/`, `/sw.js`, and `/api/proxy`.
+
+Before deploying, open the Vercel project settings and set **Framework Preset** to **Services**. Both that dashboard setting and the `services` block in `vercel.json` are required.
+
+After that, push commits to `main`. Vercel will rebuild the game manifest, publish the static site, and deploy the proxy backend together.

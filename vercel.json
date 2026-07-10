@@ -1,4 +1,26 @@
 {
-  "buildCommand": "npm run build:static",
-  "outputDirectory": "."
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": ".",
+      "buildCommand": "npm run build:static",
+      "outputDirectory": "."
+    },
+    "proxy": {
+      "root": "proxy",
+      "framework": "express",
+      "entrypoint": "server.js",
+      "maxDuration": 300
+    }
+  },
+  "rewrites": [
+    { "source": "/api/proxy", "destination": { "service": "proxy" } },
+    { "source": "/uv/(.*)", "destination": { "service": "proxy" } },
+    { "source": "/baremux/(.*)", "destination": { "service": "proxy" } },
+    { "source": "/epoxy/(.*)", "destination": { "service": "proxy" } },
+    { "source": "/service/(.*)", "destination": { "service": "proxy" } },
+    { "source": "/wisp/(.*)", "destination": { "service": "proxy" } },
+    { "source": "/sw.js", "destination": { "service": "proxy" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
 }

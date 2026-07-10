@@ -9,8 +9,7 @@
     "proxy": {
       "root": "proxy",
       "framework": "express",
-      "entrypoint": "server.js",
-      "maxDuration": 300
+      "entrypoint": "server.js"
     }
   },
   "rewrites": [

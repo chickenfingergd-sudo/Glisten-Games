@@ -624,6 +624,44 @@ function createEpoxyBareMuxTransport() {
   };
 }
 
+async function verifyProxyWispConnection() {
+  if (!window.WebSocket) {
+    throw new Error("This browser cannot open the live proxy connection.");
+  }
+
+  await new Promise((resolve, reject) => {
+    let settled = false;
+    let probe;
+    const finish = (callback) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      try {
+        probe?.close(1000, "probe complete");
+      } catch {
+        // The connection may already be closed.
+      }
+      callback();
+    };
+    const timeout = window.setTimeout(() => {
+      finish(() => reject(new Error("The live proxy connection timed out.")));
+    }, 7000);
+
+    try {
+      probe = new WebSocket(proxyWispUrl());
+      probe.addEventListener("open", () => finish(resolve), { once: true });
+      probe.addEventListener("error", () => {
+        finish(() => reject(new Error("The live proxy connection was rejected by the server.")));
+      }, { once: true });
+      probe.addEventListener("close", () => {
+        finish(() => reject(new Error("The live proxy connection closed before it could start.")));
+      }, { once: true });
+    } catch {
+      finish(() => reject(new Error("The live proxy connection could not be created.")));
+    }
+  });
+}
+
 async function ensureProxyEngine() {
   if (!("serviceWorker" in navigator)) {
     throw new Error("This browser does not support the proxy service worker.");
@@ -659,6 +697,7 @@ async function ensureProxyEngine() {
 
   await state.proxyReady;
   if (!state.proxyTransportReady) {
+    await verifyProxyWispConnection();
     await state.proxyConnection.setRemoteTransport(createEpoxyBareMuxTransport(), `Epoxy-${Date.now()}`);
     state.proxyTransportReady = true;
   }

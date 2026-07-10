@@ -85,8 +85,23 @@ const state = {
 const viewOrder = ["library", "favorites", "recent", "proxy", "settings"];
 const tabAnimationMs = 540;
 const proxyResumeKey = "glisten-games-proxy-resume";
+const proxyResumeModeKey = "glisten-games-proxy-resume-mode";
 const proxyReloadKey = "glisten-games-proxy-worker-refresh";
 const proxySmokeTestUrl = "https://example.com/";
+const liveProxyHosts = [
+  "youtube.com",
+  "youtu.be",
+  "ytimg.com",
+  "googlevideo.com",
+  "youtube-nocookie.com",
+  "tiktok.com",
+  "discord.com",
+  "discordapp.com",
+  "instagram.com",
+  "reddit.com",
+  "x.com",
+  "twitter.com"
+];
 
 const $ = (selector) => document.querySelector(selector);
 const els = {
@@ -479,6 +494,24 @@ function normalizeProxyInput(value) {
   return `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(trimmed)}`;
 }
 
+function proxyHostname(value) {
+  try {
+    return new URL(normalizeProxyInput(value)).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function needsLiveProxy(value) {
+  const hostname = proxyHostname(value);
+  return liveProxyHosts.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+}
+
+function resolveProxyMode(value, mode = "auto") {
+  if (mode === "engine" || mode === "media") return mode;
+  return needsLiveProxy(value) ? "engine" : "media";
+}
+
 function loadScript(src) {
   const existing = document.querySelector(`script[src="${src}"]`);
   if (existing) return Promise.resolve();
@@ -520,6 +553,7 @@ function sleep(ms) {
 function reloadForProxyWorker(target) {
   sessionStorage.setItem(proxyReloadKey, target || "pending");
   if (target) sessionStorage.setItem(proxyResumeKey, target);
+  sessionStorage.setItem(proxyResumeModeKey, "engine");
   window.location.reload();
 }
 
@@ -734,7 +768,7 @@ function renderProxyBookmarks() {
         syncProxyBookmarkStar();
         return;
       }
-      loadProxy(bookmark.url, "media");
+      loadProxy(bookmark.url, "auto");
     });
     els.proxyBookmarks.appendChild(item);
   });
@@ -874,12 +908,13 @@ function reloadProxyTab() {
       return;
     }
   }
-  if (tab.url) loadProxy(tab.url, tab.mode === "engine" ? "engine" : "media");
+  if (tab.url) loadProxy(tab.url, tab.mode === "engine" ? "engine" : "auto");
 }
 
-async function loadProxy(value, mode = "media") {
+async function loadProxy(value, mode = "auto") {
   const normalized = normalizeProxyInput(value);
   if (!normalized) return;
+  const resolvedMode = resolveProxyMode(normalized, mode);
   const loadId = Date.now();
   state.proxyLoadId = loadId;
   const tab = activeProxyTab() || createProxyTab();
@@ -889,8 +924,8 @@ async function loadProxy(value, mode = "media") {
   saveJson(storageKey, state.settings);
   tab.url = normalized;
   tab.title = proxyTabTitleFor(normalized);
-  tab.mode = mode === "engine" ? "engine" : "fallback";
-  tab.status = mode === "engine" ? "Starting" : "Media";
+  tab.mode = resolvedMode === "engine" ? "engine" : "fallback";
+  tab.status = resolvedMode === "engine" ? "Starting" : "Media";
   els.proxyInput.value = normalized;
   els.proxyEmpty.hidden = true;
   frame.dataset.proxyOk = "loading";
@@ -900,7 +935,7 @@ async function loadProxy(value, mode = "media") {
   renderProxyTabs();
   syncProxyBookmarkStar();
 
-  if (mode !== "engine") {
+  if (resolvedMode !== "engine") {
     setProxyTabStatus(tab, "Media");
     frame.src = proxyFallbackUrlFor(normalized);
     return;
@@ -988,6 +1023,8 @@ function proxyFrameLooksBroken(health) {
     normalized.includes("no baretransport was set") ||
     normalized.includes("proxy worker is not attached") ||
     normalized.includes("err_blocked_by_response") ||
+    normalized.includes("connect to the internet") ||
+    normalized.includes("you're offline") ||
     normalized.trim() === "not found"
   );
 }
@@ -995,6 +1032,7 @@ function proxyFrameLooksBroken(health) {
 function useProxyFallback(frame = els.proxyFrame) {
   const target = frame.dataset.proxyTarget;
   if (!target || frame.dataset.proxyMode === "fallback") return false;
+  if (needsLiveProxy(target)) return false;
 
   const fallbackUrl = proxyFallbackUrlFor(target);
   if (!fallbackUrl) return false;
@@ -1028,6 +1066,11 @@ function setupProxyFrame(frame) {
           }
 
           if (useProxyFallback(frame)) return;
+
+          const tab = state.proxyTabs.find((item) => item.frame === frame);
+          frame.dataset.proxyOk = "false";
+          if (tab) setProxyTabStatus(tab, frame.dataset.proxyMode === "engine" ? "Needs engine" : "Media");
+          return;
         }
 
         const tab = state.proxyTabs.find((item) => item.frame === frame);
@@ -1064,12 +1107,12 @@ function bindEvents() {
   els.fullscreenBtn.addEventListener("click", openPlayerFullscreen);
   els.proxyForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    loadProxy(els.proxyInput.value, "media");
+    loadProxy(els.proxyInput.value, "auto");
   });
   els.proxyInput.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
-    loadProxy(els.proxyInput.value, "media");
+    loadProxy(els.proxyInput.value, "auto");
   });
   els.proxyNewTab.addEventListener("click", () => createProxyTab({ activate: true }));
   els.proxyBack.addEventListener("click", () => proxyHistoryAction("back"));
@@ -1091,7 +1134,7 @@ function bindEvents() {
   });
   els.proxyHome.addEventListener("click", clearProxy);
   document.querySelectorAll("[data-proxy-url]").forEach((button) => {
-    button.addEventListener("click", () => loadProxy(button.dataset.proxyUrl, "media"));
+    button.addEventListener("click", () => loadProxy(button.dataset.proxyUrl, "auto"));
   });
 
   els.launchMode.addEventListener("change", (event) => updateSetting("launchMode", event.target.value));
@@ -1179,7 +1222,9 @@ updateNavHighlight();
 
 const resumeProxyTarget = sessionStorage.getItem(proxyResumeKey);
 if (resumeProxyTarget) {
+  const resumeProxyMode = sessionStorage.getItem(proxyResumeModeKey) || "auto";
   sessionStorage.removeItem(proxyResumeKey);
+  sessionStorage.removeItem(proxyResumeModeKey);
   switchView("proxy");
-  window.setTimeout(() => loadProxy(resumeProxyTarget), 250);
+  window.setTimeout(() => loadProxy(resumeProxyTarget, resumeProxyMode), 250);
 }
